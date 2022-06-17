@@ -1,0 +1,116 @@
+syntax = "proto2";
+
+package apollo.hdmap;
+
+import "modules/map/proto/map_id.proto";
+import "modules/map/proto/map_geometry.proto";
+
+message LaneBoundaryType {
+  enum Type {
+    UNKNOWN = 0;
+    DOTTED_YELLOW = 1; //点黄
+    DOTTED_WHITE = 2;  //点白
+    SOLID_YELLOW = 3;  //实黄
+    SOLID_WHITE = 4;   //实白
+    DOUBLE_YELLOW = 5; //双黄
+    CURB = 6;          //马路牙子
+  };
+  // Offset relative to the starting point of boundary 相对于起始点边界的offset
+  optional double s = 1;
+  // support multiple types  多类型
+  repeated Type types = 2;
+}
+
+message LaneBoundary {
+  optional Curve curve = 1;
+
+  optional double length = 2;
+  // indicate whether the lane boundary exists in real world 边界是否存在
+  optional bool virtual = 3;
+  // in ascending order of s 按照s升序排列
+  repeated LaneBoundaryType boundary_type = 4;
+}
+
+// Association between central point to closest boundary.
+//中心点与最近边界的关联
+message LaneSampleAssociation {
+  optional double s = 1;
+  optional double width = 2;
+}
+
+//车道是单行道的一部分,供单行车辆使用
+// A lane is part of a roadway, that is designated for use by a single line of
+// vehicles.
+// Most public roads (include highways) have more than two lanes. 大多数道路有超过2个车道
+message Lane {
+  optional Id id = 1;
+
+  // Central lane as reference trajectory, not necessary to be the geometry
+  // central.
+  optional Curve central_curve = 2;
+
+  // Lane boundary curve.
+  optional LaneBoundary left_boundary = 3;
+  optional LaneBoundary right_boundary = 4;
+
+  // in meters.   米
+  optional double length = 5;
+
+  // Speed limit of the lane, in meters per second.  限速
+  optional double speed_limit = 6;
+
+  repeated Id overlap_id = 7;   //重叠
+
+  // All lanes can be driving into (or from).  //所有车道可以被驶入或驶出
+  repeated Id predecessor_id = 8;  //前任 ID
+  repeated Id successor_id = 9;    //后续 ID
+
+  // Neighbor lanes on the same direction.  相同方向的邻近车道
+  repeated Id left_neighbor_forward_lane_id = 10;  //左
+  repeated Id right_neighbor_forward_lane_id = 11;  //右
+
+//LaneType: city_driving, biking, sidewalk, parking, shoulder 
+  enum LaneType {
+    NONE = 1;
+    CITY_DRIVING = 2;
+    BIKING = 3;
+    SIDEWALK = 4;
+    PARKING = 5;
+    SHOULDER = 6;
+  };
+  optional LaneType type = 12;
+
+//laneturn:no_turn, left, right, u
+  enum LaneTurn {
+    NO_TURN = 1;
+    LEFT_TURN = 2;
+    RIGHT_TURN = 3;
+    U_TURN = 4;
+  };
+  optional LaneTurn turn = 13;
+
+  repeated Id left_neighbor_reverse_lane_id = 14;
+  repeated Id right_neighbor_reverse_lane_id = 15;
+
+  optional Id junction_id = 16;
+
+//中心点与最近边界的关联
+  // Association between central point to closest boundary.
+  repeated LaneSampleAssociation left_sample = 17;
+  repeated LaneSampleAssociation right_sample = 18;
+
+//车道方向,前,后,双向
+  enum LaneDirection {
+    FORWARD = 1;
+    BACKWARD = 2;
+    BIDIRECTION = 3;
+  }
+  optional LaneDirection direction = 19;
+
+//中心点与最近道路边界的关联
+  // Association between central point to closest road boundary.
+  repeated LaneSampleAssociation left_road_sample = 20;
+  repeated LaneSampleAssociation right_road_sample = 21;
+
+  repeated Id self_reverse_lane_id = 22;
+}
